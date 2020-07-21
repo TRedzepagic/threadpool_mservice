@@ -5,9 +5,9 @@ import (
 	"sync"
 )
 
-// This package contains implementation of Thread Pool that will be able like PoolCoordinator
+// This package contains implementation of a Thread Pool.
 
-// ByteArray -
+// ByteArray is an array of arrays (Slice of slices).
 type ByteArray [][]byte
 
 // Function -
@@ -22,7 +22,7 @@ type Coordinator struct {
 	mux       sync.Mutex
 }
 
-// Enqueue places new task into queue and returns its lenghth
+// Enqueue places a new task into the TaskQueue and returns its (TaskQueue's) length
 func (c *Coordinator) Enqueue(fun func([]byte), data []byte) int {
 	c.mux.Lock()
 	c.TaskQueue = append(c.TaskQueue, fun)
@@ -31,7 +31,7 @@ func (c *Coordinator) Enqueue(fun func([]byte), data []byte) int {
 	return len(c.TaskQueue)
 }
 
-// Dequeue removes one task and retunrs it to caller
+// Dequeue removes one task and returns it to the caller
 func (c *Coordinator) Dequeue() (func([]byte), []byte) {
 	if len(c.TaskQueue) > 0 {
 		c.mux.Lock()
@@ -46,17 +46,27 @@ func (c *Coordinator) Dequeue() (func([]byte), []byte) {
 	return nil, nil
 }
 
-// IsEmpty checks if Coordinator queue is empty
+// IsEmpty checks if coordinator queue is empty
 func (c *Coordinator) IsEmpty() bool {
 	return len(c.TaskQueue) == 0 || len(c.DataQueue) == 0
 }
 
-// Stop -
+// CreateCoordinator is a constructor for our coordinator
+func CreateCoordinator() *Coordinator {
+	return &Coordinator{
+		TaskQueue: make([]Function, 0),
+		DataQueue: make([][]byte, 0),
+		Done:      make(chan bool, 1),
+		RunToMain: make(chan bool, 1),
+	}
+}
+
+// Stop gracefully stops the program
 func (c *Coordinator) Stop() {
 	c.Done <- true
 
-	// This Stop is called from Main thread. We must not return from this function until
-	// we receive signal on RunToMain Channel from Run thread. This signal will be received when Run is gracefully stoped.
+	// Stop is called from main() thread. We must not return from this function until
+	// we receive a signal on the RunToMain channel from Run thread. This signal will be received when Run is gracefully stopped.
 	<-c.RunToMain
 }
 

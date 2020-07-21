@@ -10,14 +10,17 @@ import (
 	"github.com/TRedzepagic/threadpool_mservice/pkg/pool"
 )
 
+// Mail represents data contract for mailing
 type Mail struct {
 	Address string `json:"address"`
 }
 
+// Ping represents data contract for pinging
 type Ping struct {
 	IP string `json:"ip_address"`
 }
 
+// PingFunc represents the pinging function
 func PingFunc(data []byte) {
 	ping := Ping{}
 	json.Unmarshal(data, &ping)
@@ -28,33 +31,30 @@ func PingFunc(data []byte) {
 		Address: "ph.ph2@gmail.com",
 	}
 	bytes, _ := json.Marshal(mail)
-	Pool.Enqueue(MailFunc, bytes)
+	coordinator.Enqueue(MailFunc, bytes)
 }
 
+// MailFunc represents the mailing function
 func MailFunc(data []byte) {
 	mail := Mail{}
-	json.Unmarshal(data, mail)
+	json.Unmarshal(data, &mail)
 	fmt.Println("SENDING MAIL TO " + mail.Address)
 }
 
-var Pool pool.Coordinator
+var coordinator = pool.CreateCoordinator()
 
 func main() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	Pool.TaskQueue = make([]pool.Function, 0)
-	Pool.DataQueue = make([][]byte, 0)
-	Pool.Done = make(chan bool, 1)
-	Pool.RunToMain = make(chan bool, 1)
-
-	go Pool.Run()
+	go coordinator.Run()
 
 	ping := Ping{IP: "127.0.0.1"}
 	bytes, _ := json.Marshal(ping)
-	Pool.Enqueue(PingFunc, bytes)
+	coordinator.Enqueue(PingFunc, bytes)
 
 	<-stop
-	Pool.Stop()
+	coordinator.Stop()
+
 }
