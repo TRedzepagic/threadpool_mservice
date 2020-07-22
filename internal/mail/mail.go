@@ -50,7 +50,7 @@ func Func(mailData []byte) {
 		config.Port = mailConf.Port
 		config.User = mailConf.User
 		config.Pass = mailConf.Pass
-
+		configured = true
 	}
 
 	fmt.Println("Configuration of user mail: ")
