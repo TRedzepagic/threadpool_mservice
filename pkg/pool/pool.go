@@ -2,7 +2,6 @@ package pool
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
@@ -11,7 +10,7 @@ import (
 // ByteArray is an array of arrays (Slice of slices).
 type ByteArray [][]byte
 
-// Function -
+// Function is a function that takes a s
 type Function func([]byte)
 
 // Wg represents our WaitGroup variable, used for graceful exit. Waits for current task in queue, then exits
@@ -48,13 +47,14 @@ func (c *Coordinator) Enqueue(fun func([]byte), data []byte) int {
 
 // Dequeue removes one task and returns it to the caller
 func (c *Coordinator) Dequeue() (func([]byte), []byte) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
 	if len(c.TaskQueue) > 0 {
-		c.mux.Lock()
 		fun := c.TaskQueue[0]
 		data := c.DataQueue[0]
 		c.TaskQueue = c.TaskQueue[1:]
 		c.DataQueue = c.DataQueue[1:]
-		c.mux.Unlock()
 		return fun, data
 	}
 
@@ -63,6 +63,9 @@ func (c *Coordinator) Dequeue() (func([]byte), []byte) {
 
 // IsEmpty checks if coordinator queue is empty
 func (c *Coordinator) IsEmpty() bool {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
 	return len(c.TaskQueue) == 0 || len(c.DataQueue) == 0
 }
 
@@ -71,22 +74,17 @@ func (c *Coordinator) TaskSize() int {
 	return len(c.TaskQueue)
 }
 
-// Run runs in separate go thread
+// Run runs in separate go thread and they are SEQUENTIAL
 func (c *Coordinator) Run() {
-Runner:
+	Wg.Add(1)
 	for {
 		select {
 		case <-c.CTX.Done():
-			fmt.Println("I am exiting...")
-			break Runner
+			Wg.Done()
+			return
 		default:
-			if !c.IsEmpty() {
-				fmt.Println("Default case")
-				fun, data := c.Dequeue()
-				Wg.Add(1)
+			if fun, data := c.Dequeue(); fun != nil {
 				fun(data)
-				fmt.Println("Task DONE!")
-				Wg.Done()
 			}
 		}
 	}

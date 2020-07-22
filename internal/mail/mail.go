@@ -6,11 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/irnes/go-mailer"
 )
 
+// mailConfig struct represents sender configuration to be unmarshalled
 type mailConfig struct {
 	Host string `json:"host"`
 	Port int    `json:"port"`
@@ -18,7 +20,7 @@ type mailConfig struct {
 	Pass string `json:"pass"`
 }
 
-// Mail data contract
+// Mail data contract for function
 type Mail struct {
 	IP           string   `json:"ip"`
 	Recipients   []string `json:"recipients"`
@@ -41,33 +43,43 @@ func initMailer(path string) *mailConfig {
 	return &mailconfiguration
 }
 
+// wrapperConf configuration struct necessary to avoid initialization repetition
+type wrapperConf struct {
+	mux        sync.Mutex
+	configured bool
+	config     mailer.Config
+}
+
+var wrapConf wrapperConf = wrapperConf{}
+
 // Func represents the mailing function
 func Func(mailData []byte) {
-
-	configured := false
-	var config mailer.Config
-	if !configured {
+	wrapConf.mux.Lock()
+	if !wrapConf.configured {
+		fmt.Println("Mailconfig repetition printing test")
 		mailConf := initMailer(os.Getenv("MAILCONFJSON"))
-		config.Host = mailConf.Host
-		config.Port = mailConf.Port
-		config.User = mailConf.User
-		config.Pass = mailConf.Pass
-		configured = true
+		wrapConf.config.Host = mailConf.Host
+		wrapConf.config.Port = mailConf.Port
+		wrapConf.config.User = mailConf.User
+		wrapConf.config.Pass = mailConf.Pass
+		wrapConf.configured = true
 	}
+	wrapConf.mux.Unlock()
 
 	fmt.Println("Configuration of user mail: ")
-	fmt.Println("Host: " + config.Host)
-	fmt.Println("Mailing port: " + strconv.Itoa(config.Port))
+	fmt.Println("Host: " + wrapConf.config.Host)
+	fmt.Println("Mailing port: " + strconv.Itoa(wrapConf.config.Port))
 	fmt.Println("User: Hidden")
 	fmt.Println("Pass: Hidden")
 
 	mail := mailer.NewMail()
 	mail.FromName = "Go Mailer - Redzep Microservice"
-	mail.From = config.User
+	mail.From = wrapConf.config.User
 
 	toMail := Mail{}
 	json.Unmarshal(mailData, &toMail)
 
+	// Debugging purposes. Gives user time to cancel the program, testing out the context cancellation and graceful exit.
 	fmt.Println("Sleeping (10 seconds), try cancelling now!! Should finish running task..")
 	time.Sleep(10 * time.Second)
 
@@ -84,8 +96,7 @@ func Func(mailData []byte) {
 	fmt.Println("Detected e-mails : ")
 	fmt.Println(toMail.Recipients)
 
-	// used for actual mailing, uncomment when needed
-
+	// Used for actual mailing, uncomment when needed
 	// mailerino := mailer.NewMailer(config, true)
 	// err := mailerino.Send(mail)
 	// if err != nil {

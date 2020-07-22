@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/TRedzepagic/threadpool_mservice/internal/ping"
@@ -13,14 +14,19 @@ import (
 )
 
 func main() {
-
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	context, stopCoordinator := context.WithCancel(context.Background())
 	pool.CoordinatorInstance.CTX = context
 
-	go pool.CoordinatorInstance.Run()
+	// Adds workers equal to the number of CPUs
+	for i := 0; i < runtime.GOMAXPROCS(runtime.NumCPU()); i++ {
+		go pool.CoordinatorInstance.Run()
+	}
+
+	// One worker
+	// go pool.CoordinatorInstance.Run()
 
 	pingInfo := ping.Ping{
 		// Google IP address guaranteed to pass
@@ -49,14 +55,10 @@ func main() {
 	pingBytesThird, _ := json.Marshal(pingInfoThird)
 
 	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytes)
-	fmt.Printf("SIZE OF TASK QUEUE %d \n", pool.CoordinatorInstance.TaskSize())
 	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytesSecond)
-	fmt.Printf("SIZE OF TASK QUEUE %d \n", pool.CoordinatorInstance.TaskSize())
 	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytesThird)
-	fmt.Printf("SIZE OF TASK QUEUE %d \n", pool.CoordinatorInstance.TaskSize())
 
 	<-stop
-	fmt.Println("Stop received")
 	stopCoordinator()
 	pool.Wg.Wait()
 	fmt.Println("Work done, shutting down")
