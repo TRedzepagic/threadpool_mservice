@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/irnes/go-mailer"
@@ -43,38 +42,26 @@ func initMailer(path string) *mailConfig {
 	return &mailconfiguration
 }
 
-// wrapperConf configuration struct necessary to avoid initialization repetition
-type wrapperConf struct {
-	mux        sync.Mutex
-	configured bool
-	config     mailer.Config
-}
-
-var wrapConf wrapperConf = wrapperConf{}
-
 // Func represents the mailing function
 func Func(mailData []byte) {
-	wrapConf.mux.Lock()
-	if !wrapConf.configured {
-		fmt.Println("Mailconfig repetition printing test")
-		mailConf := initMailer(os.Getenv("MAILCONFJSON"))
-		wrapConf.config.Host = mailConf.Host
-		wrapConf.config.Port = mailConf.Port
-		wrapConf.config.User = mailConf.User
-		wrapConf.config.Pass = mailConf.Pass
-		wrapConf.configured = true
+
+	mailConf := initMailer(os.Getenv("MAILCONFJSON"))
+	config := mailer.Config{
+		Host: mailConf.Host,
+		Port: mailConf.Port,
+		User: mailConf.User,
+		Pass: mailConf.Pass,
 	}
-	wrapConf.mux.Unlock()
 
 	fmt.Println("Configuration of user mail: ")
-	fmt.Println("Host: " + wrapConf.config.Host)
-	fmt.Println("Mailing port: " + strconv.Itoa(wrapConf.config.Port))
+	fmt.Println("Host: " + config.Host)
+	fmt.Println("Mailing port: " + strconv.Itoa(config.Port))
 	fmt.Println("User: Hidden")
 	fmt.Println("Pass: Hidden")
 
 	mail := mailer.NewMail()
 	mail.FromName = "Go Mailer - Redzep Microservice"
-	mail.From = wrapConf.config.User
+	mail.From = config.User
 
 	toMail := Mail{}
 	json.Unmarshal(mailData, &toMail)
