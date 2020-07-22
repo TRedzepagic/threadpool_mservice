@@ -22,6 +22,17 @@ type Coordinator struct {
 	mux       sync.Mutex
 }
 
+// CoordinatorInstance Global variable represents a single coordinator
+var CoordinatorInstance = InitCoordinator()
+
+// InitCoordinator initializes the coordinator
+func InitCoordinator() *Coordinator {
+	return &Coordinator{
+		TaskQueue: make([]Function, 0),
+		DataQueue: make([][]byte, 0),
+	}
+}
+
 // Enqueue places a new task into the TaskQueue and returns its (TaskQueue's) length
 func (c *Coordinator) Enqueue(fun func([]byte), data []byte) int {
 	c.mux.Lock()
@@ -49,23 +60,6 @@ func (c *Coordinator) Dequeue() (func([]byte), []byte) {
 // IsEmpty checks if coordinator queue is empty
 func (c *Coordinator) IsEmpty() bool {
 	return len(c.TaskQueue) == 0 || len(c.DataQueue) == 0
-}
-
-// CreateCoordinator is a constructor for our coordinator
-func CreateCoordinator() *Coordinator {
-	return &Coordinator{
-		TaskQueue: make([]Function, 0),
-		DataQueue: make([][]byte, 0),
-	}
-}
-
-// Stop gracefully stops the program
-func (c *Coordinator) Stop() {
-	c.Done <- true
-
-	// Stop is called from main() thread. We must not return from this function until
-	// we receive a signal on the RunToMain channel from Run thread. This signal will be received when Run is gracefully stopped.
-	<-c.RunToMain
 }
 
 // Run runs in separate go thread

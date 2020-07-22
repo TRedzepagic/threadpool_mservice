@@ -3,60 +3,52 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/TRedzepagic/threadpool_mservice/internal/ping"
 	"github.com/TRedzepagic/threadpool_mservice/pkg/pool"
 )
 
-// Mail represents data contract for mailing
-type Mail struct {
-	Address string `json:"address"`
-}
-
-// Ping represents data contract for pinging
-type Ping struct {
-	IP string `json:"ip_address"`
-}
-
-// PingFunc represents the pinging function
-func PingFunc(data []byte) {
-	ping := Ping{}
-	json.Unmarshal(data, &ping)
-	fmt.Println(ping.IP)
-
-	// If ping fails
-	mail := Mail{
-		Address: "ph.ph2@gmail.com",
-	}
-	bytes, _ := json.Marshal(mail)
-	coordinator.Enqueue(MailFunc, bytes)
-}
-
-// MailFunc represents the mailing function
-func MailFunc(data []byte) {
-	mail := Mail{}
-	json.Unmarshal(data, &mail)
-	fmt.Println("SENDING MAIL TO " + mail.Address)
-}
-
-var coordinator = pool.CreateCoordinator()
-
 func main() {
-
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	context, stopCoordinator := context.WithCancel(context.Background())
-	coordinator.CTX = context
+	pool.CoordinatorInstance.CTX = context
 
-	go coordinator.Run()
+	go pool.CoordinatorInstance.Run()
 
-	ping := Ping{IP: "127.0.0.1"}
-	bytes, _ := json.Marshal(ping)
-	coordinator.Enqueue(PingFunc, bytes)
+	pingInfo := ping.Ping{
+		// Google IP address guaranteed to pass
+		IP:           "172.217.16.100",
+		Recipients:   make([]string, 0),
+		PingInterval: "3"}
+	// Add recipients
+	pingInfo.Recipients = append(pingInfo.Recipients, "redzepagict@gmail.com")
+
+	pingInfoSecond := ping.Ping{
+		IP:           "192.168.0.25",
+		Recipients:   make([]string, 0),
+		PingInterval: "3"}
+	// Add recipients
+	pingInfoSecond.Recipients = append(pingInfoSecond.Recipients, "redzepagict@gmail.com")
+
+	pingInfoThird := ping.Ping{
+		IP:           "192.168.0.25",
+		Recipients:   make([]string, 0),
+		PingInterval: "3"}
+	// Add recipients
+	pingInfoThird.Recipients = append(pingInfoThird.Recipients, "redzepagict@gmail.com")
+
+	pingBytes, _ := json.Marshal(pingInfo)
+	pingBytesSecond, _ := json.Marshal(pingInfoSecond)
+	pingBytesThird, _ := json.Marshal(pingInfoThird)
+
+	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytes)
+	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytesSecond)
+	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytesThird)
 
 	<-stop
 	stopCoordinator()
