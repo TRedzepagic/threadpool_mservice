@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/irnes/go-mailer"
 )
@@ -42,6 +43,7 @@ func initMailer(path string) *mailConfig {
 
 // Func represents the mailing function
 func Func(mailData []byte) {
+
 	configured := false
 	var config mailer.Config
 	if !configured {
@@ -66,6 +68,9 @@ func Func(mailData []byte) {
 	toMail := Mail{}
 	json.Unmarshal(mailData, &toMail)
 
+	fmt.Println("Sleeping (10 seconds), try cancelling now!! Should finish running task..")
+	time.Sleep(10 * time.Second)
+
 	for _, recipientIteration := range toMail.Recipients {
 		mail.SetTo(recipientIteration)
 	}
@@ -75,19 +80,18 @@ func Func(mailData []byte) {
 	mail.Subject = "Admin notice : Server Down"
 	mail.Body = "Your server is down. Host Address: " + toMail.IP + " " + "Host pinging interval:" + toMail.PingInterval
 
-	// fmt.Println("Not actually mailing, testing to avoid clutter : ")
-	// fmt.Println("Detected e-mails : ")
-	// fmt.Println(toMail.Recipients)
+	fmt.Println("Not actually mailing, testing to avoid clutter : ")
+	fmt.Println("Detected e-mails : ")
+	fmt.Println(toMail.Recipients)
 
 	// used for actual mailing, uncomment when needed
 
-	mailerino := mailer.NewMailer(config, true)
-	err := mailerino.Send(mail)
-	if err != nil {
-		println(err.Error())
-	} else {
-		fmt.Println("Mail sent to : ")
-		fmt.Println(toMail.Recipients)
-	}
-
+	// mailerino := mailer.NewMailer(config, true)
+	// err := mailerino.Send(mail)
+	// if err != nil {
+	// 	println(err.Error())
+	// } else {
+	// 	fmt.Println("Mail sent to : ")
+	// 	fmt.Println(toMail.Recipients)
+	// }
 }

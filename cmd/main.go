@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
@@ -47,9 +49,15 @@ func main() {
 	pingBytesThird, _ := json.Marshal(pingInfoThird)
 
 	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytes)
+	fmt.Printf("SIZE OF TASK QUEUE %d \n", pool.CoordinatorInstance.TaskSize())
 	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytesSecond)
+	fmt.Printf("SIZE OF TASK QUEUE %d \n", pool.CoordinatorInstance.TaskSize())
 	pool.CoordinatorInstance.Enqueue(ping.Func, pingBytesThird)
+	fmt.Printf("SIZE OF TASK QUEUE %d \n", pool.CoordinatorInstance.TaskSize())
 
 	<-stop
+	fmt.Println("Stop received")
 	stopCoordinator()
+	pool.Wg.Wait()
+	fmt.Println("Work done, shutting down")
 }

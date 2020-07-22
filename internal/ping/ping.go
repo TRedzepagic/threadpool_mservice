@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/TRedzepagic/threadpool_mservice/internal/mail"
 	"github.com/TRedzepagic/threadpool_mservice/pkg/pool"
@@ -19,6 +20,7 @@ type Ping struct {
 
 // Func represents the pinging function
 func Func(pingData []byte) {
+
 	pingObject := Ping{}
 	json.Unmarshal(pingData, &pingObject)
 	fmt.Println("PingFunc received the following:")
@@ -37,4 +39,7 @@ func Func(pingData []byte) {
 		fmt.Println("Host ping successful! Ignoring mailing protocol.")
 		fmt.Println(string(out))
 	}
+	fmt.Println("Sleeping 3sec, ease of following timeline")
+	time.Sleep(3 * time.Second)
+
 }

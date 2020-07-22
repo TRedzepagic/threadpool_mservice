@@ -14,6 +14,10 @@ type ByteArray [][]byte
 // Function -
 type Function func([]byte)
 
+// Wg represents our WaitGroup variable, used for graceful exit. Waits for current task in queue, then exits
+// Ignores non-started tasks in queue.
+var Wg sync.WaitGroup
+
 // Coordinator is implementation of Thread Pool that uses one queue for deploying and executing tasks
 type Coordinator struct {
 	TaskQueue []Function
@@ -62,17 +66,27 @@ func (c *Coordinator) IsEmpty() bool {
 	return len(c.TaskQueue) == 0 || len(c.DataQueue) == 0
 }
 
+// TaskSize checks TaskQueue size
+func (c *Coordinator) TaskSize() int {
+	return len(c.TaskQueue)
+}
+
 // Run runs in separate go thread
 func (c *Coordinator) Run() {
+Runner:
 	for {
 		select {
 		case <-c.CTX.Done():
-			fmt.Println(" I am exiting ")
-			break
+			fmt.Println("I am exiting...")
+			break Runner
 		default:
 			if !c.IsEmpty() {
+				fmt.Println("Default case")
 				fun, data := c.Dequeue()
+				Wg.Add(1)
 				fun(data)
+				fmt.Println("Task DONE!")
+				Wg.Done()
 			}
 		}
 	}
