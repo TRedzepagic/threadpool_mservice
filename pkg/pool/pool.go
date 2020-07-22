@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -17,8 +18,7 @@ type Function func([]byte)
 type Coordinator struct {
 	TaskQueue []Function
 	DataQueue ByteArray
-	Done      chan bool
-	RunToMain chan bool
+	CTX       context.Context
 	mux       sync.Mutex
 }
 
@@ -56,8 +56,6 @@ func CreateCoordinator() *Coordinator {
 	return &Coordinator{
 		TaskQueue: make([]Function, 0),
 		DataQueue: make([][]byte, 0),
-		Done:      make(chan bool, 1),
-		RunToMain: make(chan bool, 1),
 	}
 }
 
@@ -74,9 +72,8 @@ func (c *Coordinator) Stop() {
 func (c *Coordinator) Run() {
 	for {
 		select {
-		case <-c.Done:
+		case <-c.CTX.Done():
 			fmt.Println(" I am exiting ")
-			c.RunToMain <- true
 			break
 		default:
 			if !c.IsEmpty() {

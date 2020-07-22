@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -48,6 +49,9 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
+	context, stopCoordinator := context.WithCancel(context.Background())
+	coordinator.CTX = context
+
 	go coordinator.Run()
 
 	ping := Ping{IP: "127.0.0.1"}
@@ -55,6 +59,5 @@ func main() {
 	coordinator.Enqueue(PingFunc, bytes)
 
 	<-stop
-	coordinator.Stop()
-
+	stopCoordinator()
 }
