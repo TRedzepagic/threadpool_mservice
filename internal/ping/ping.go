@@ -20,18 +20,18 @@ type Ping struct {
 // Func represents the pinging function
 func Func(pingData []byte) {
 
-	pingObject := Ping{}
-	err := json.Unmarshal(pingData, &pingObject)
+	ping := Ping{}
+	err := json.Unmarshal(pingData, &ping)
 	if err != nil {
 		log.Println("error unmarshalling ", err.Error())
 	}
-	log.Println(pingObject)
+	log.Println(ping)
 
 	// Ping syscall, -c is ping count, -i is interval, -w is timeout
-	out, _ := exec.Command("ping", pingObject.IP, "-c 5", "-i "+pingObject.PingInterval, "-w 2").Output()
+	out, _ := exec.Command("ping", ping.IP, "-c 5", "-i "+ping.PingInterval, "-w 2").Output()
 
 	if (strings.Contains(string(out), "Destination Host Unreachable")) || (strings.Contains(string(out), "100% packet loss")) {
-		log.Printf("Host %s is down, sending mail ... \n", pingObject.IP)
+		log.Printf("Host %s is down, sending mail ... \n", ping.IP)
 		// Enqueue to send e-mail when able
 		pool.CoordinatorInstance.Enqueue(mail.Func, pingData)
 	} else {
