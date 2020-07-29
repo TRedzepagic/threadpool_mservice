@@ -18,7 +18,7 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	context, stopCoordinator := context.WithCancel(context.Background())
-	pool.CoordinatorInstance.CTX = context
+	pool.CoordinatorInstance.Ctx = context
 
 	// Adds workers equal to the number of CPUs
 	for i := 0; i < runtime.GOMAXPROCS(runtime.NumCPU()); i++ {

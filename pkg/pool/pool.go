@@ -7,21 +7,22 @@ import (
 
 // This package contains implementation of a Thread Pool.
 
-// ByteArray is an array of arrays (Slice of slices).
-type ByteArray [][]byte
+// ByteSlice is a type redefinition for clarity - slice of byte slices ([]byte).
+type ByteSlice [][]byte
 
-// Function is a function that takes a s
+// Function is a type redefinition for clarity - function that takes a byte slice ([]byte)
 type Function func([]byte)
 
-// Wg represents our WaitGroup variable, used for graceful exit. Waits for current task in queue, then exits
+// Wg represents our WaitGroup variable, used for graceful exit.
+// Waits for our worker to complete current task in queue, then exits
 // Ignores non-started tasks in queue.
 var Wg sync.WaitGroup
 
 // Coordinator is implementation of Thread Pool that uses one queue for deploying and executing tasks
 type Coordinator struct {
 	TaskQueue []Function
-	DataQueue ByteArray
-	CTX       context.Context
+	DataQueue ByteSlice
+	Ctx       context.Context
 	mux       sync.Mutex
 }
 
@@ -74,12 +75,12 @@ func (c *Coordinator) TaskSize() int {
 	return len(c.TaskQueue)
 }
 
-// Run runs in separate go thread and they are SEQUENTIAL
+// Run runs in separate go thread/worker, his subsequen tasks are SEQUENTIAL.
 func (c *Coordinator) Run() {
 	Wg.Add(1)
 	for {
 		select {
-		case <-c.CTX.Done():
+		case <-c.Ctx.Done():
 			Wg.Done()
 			return
 		default:
