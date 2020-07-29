@@ -70,12 +70,15 @@ func (c *Coordinator) IsEmpty() bool {
 	return len(c.TaskQueue) == 0 || len(c.DataQueue) == 0
 }
 
-// TaskSize checks TaskQueue size
-func (c *Coordinator) TaskSize() int {
-	return len(c.TaskQueue)
+// Size checks TaskQueue&DataQueue size
+func (c *Coordinator) Size() (int, int) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	return len(c.TaskQueue), len(c.DataQueue)
 }
 
-// Run runs in separate go thread/worker, his subsequen tasks are SEQUENTIAL.
+// Run runs in separate go thread/worker, its subsequent tasks are SEQUENTIAL.
 func (c *Coordinator) Run() {
 	Wg.Add(1)
 	for {

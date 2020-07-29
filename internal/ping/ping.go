@@ -2,7 +2,7 @@ package ping
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os/exec"
 	"strings"
 
@@ -21,18 +21,21 @@ type Ping struct {
 func Func(pingData []byte) {
 
 	pingObject := Ping{}
-	json.Unmarshal(pingData, &pingObject)
-	fmt.Println(pingObject)
+	err := json.Unmarshal(pingData, &pingObject)
+	if err != nil {
+		log.Println("error unmarshalling ", err.Error())
+	}
+	log.Println(pingObject)
 
 	// Ping syscall, -c is ping count, -i is interval, -w is timeout
 	out, _ := exec.Command("ping", pingObject.IP, "-c 5", "-i "+pingObject.PingInterval, "-w 2").Output()
 
 	if (strings.Contains(string(out), "Destination Host Unreachable")) || (strings.Contains(string(out), "100% packet loss")) {
-		fmt.Printf("Host %s is down, sending mail ... \n", pingObject.IP)
+		log.Printf("Host %s is down, sending mail ... \n", pingObject.IP)
 		// Enqueue to send e-mail when able
 		pool.CoordinatorInstance.Enqueue(mail.Func, pingData)
 	} else {
-		fmt.Println("Host ping successful!")
+		log.Println("Host ping successful!")
 	}
 
 	// Sleeping for debugging purposes, also to get some time to cancel if need be. Optional.

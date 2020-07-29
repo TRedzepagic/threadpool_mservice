@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -61,5 +61,5 @@ func main() {
 	<-stop
 	stopCoordinator()
 	pool.Wg.Wait()
-	fmt.Println("Work done, shutting down")
+	log.Println("Work done, shutting down")
 }
