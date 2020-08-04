@@ -1,0 +1,31 @@
+{
+    "hosts": [
+       { 
+        "ip":"172.217.16.100",
+        "recipients":[
+            "redzepagict@gmail.com",
+            "redzepagict@gmail.com"
+           ],
+        "pinginterval":"3"
+       },
+   
+       { 
+        "ip":"192.168.0.25",
+        "recipients":[
+            "redzepagict@gmail.com",
+            "redzepagict@gmail.com"
+           ],
+        "pinginterval":"4"
+       },
+       { 
+        "ip":"192.168.0.25",
+        "recipients":[
+            "redzepagict@gmail.com",
+            "redzepagict@gmail.com"
+           ],
+        "pinginterval":"5"
+       }
+     ] 
+   }
+
+

@@ -10,6 +10,11 @@ import (
 	"github.com/TRedzepagic/threadpool_mservice/pkg/pool"
 )
 
+// Pings represents slice of hosts unmarshalled from file
+type Pings struct {
+	Hosts []Ping `json:"hosts"`
+}
+
 // Ping represents data contract for pinging
 type Ping struct {
 	IP           string   `json:"ip"`
@@ -25,7 +30,9 @@ func Func(pingData []byte) {
 	if err != nil {
 		log.Println("error unmarshalling ", err.Error())
 	}
-	log.Println(ping)
+
+	// Testing
+	log.Printf("PING HAS RECEIVED ADDR: %s, RECIPIENTS %s, INTERVAL %s", ping.IP, ping.Recipients, ping.PingInterval)
 
 	// Ping syscall, -c is ping count, -i is interval, -w is timeout
 	out, _ := exec.Command("ping", ping.IP, "-c 5", "-i "+ping.PingInterval, "-w 2").Output()
