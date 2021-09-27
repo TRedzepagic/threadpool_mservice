@@ -2,6 +2,7 @@ package pool
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -84,6 +85,7 @@ func (c *Coordinator) Run() {
 	for {
 		select {
 		case <-c.Ctx.Done():
+			fmt.Println("Context cancelled!")
 			Wg.Done()
 			return
 		default:

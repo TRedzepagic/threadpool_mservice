@@ -36,7 +36,7 @@ func main() {
 	context, stopCoordinator := context.WithCancel(context.Background())
 	pool.CoordinatorInstance.Ctx = context
 
-	HostSlice := load("cmd/config.json")
+	HostSlice := load("config.json")
 
 	// Adds workers equal to the number of CPUs
 	for i := 0; i < runtime.GOMAXPROCS(runtime.NumCPU()); i++ {
